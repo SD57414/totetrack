@@ -232,7 +232,7 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
 
 <div class="save-bar">
   <div class="save-bar-label" id="save-label">
-    &#x1F4BE; <strong>OneDrive Sync</strong> &mdash; Load your <code>totes.json</code>, make changes, then save it back.
+    &#x1F4BE; <strong>OneDrive Sync</strong> &mdash; Always load before editing, always save after. Upload <code>totes.json</code> back to OneDrive when done.
   </div>
   <button class="btn-load" onclick="openLoadModal()">&#x1F4C2; Load from File</button>
   <button class="btn-save" onclick="saveToFile()">&#x1F4BE; Save to File</button>
@@ -371,18 +371,29 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     <button class="modal-close" onclick="closeModal('load-modal')">&#x2715;</button>
     <h2>&#x1F4C2; Load from OneDrive</h2>
     <div class="info-box">
-      <strong>&#x1F4CB; How to load your totes.json</strong>
-      <div class="step"><div class="step-num">1</div><span>Open OneDrive and find <strong>totes.json</strong></span></div>
-      <div class="step"><div class="step-num">2</div><span>Download it to your device</span></div>
-      <div class="step"><div class="step-num">3</div><span>Drag it into the box below, or click to browse</span></div>
+      <strong>&#x1F4CB; On PC</strong>
+      <div class="step"><div class="step-num">1</div><span>Open your OneDrive folder and find <strong>totes.json</strong></span></div>
+      <div class="step"><div class="step-num">2</div><span>Drag it into the box below</span></div>
+    </div>
+    <div class="info-box" style="margin-top:-.25rem;">
+      <strong>&#x1F4F1; On Android</strong>
+      <div class="step"><div class="step-num">1</div><span>Open the <strong>OneDrive app</strong> &rarr; find <strong>totes.json</strong></span></div>
+      <div class="step"><div class="step-num">2</div><span>Tap <strong>Download</strong> to save it to your device</span></div>
+      <div class="step"><div class="step-num">3</div><span>Tap the box below &rarr; browse to <strong>Downloads</strong> &rarr; select the file</span></div>
+    </div>
+    <div class="info-box" style="margin-top:-.25rem;">
+      <strong>&#x1F34E; On iPhone</strong>
+      <div class="step"><div class="step-num">1</div><span>Open the <strong>OneDrive app</strong> &rarr; find <strong>totes.json</strong></span></div>
+      <div class="step"><div class="step-num">2</div><span>Tap <strong>...</strong> &rarr; <strong>Save to Files</strong></span></div>
+      <div class="step"><div class="step-num">3</div><span>Tap the box below &rarr; browse Files &rarr; select the file</span></div>
     </div>
     <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="dzDragOver(event)" ondragleave="dzDragLeave()" ondrop="dzDrop(event)">
       <div class="dz-icon">&#x1F4C4;</div>
-      <div>Drop <strong>totes.json</strong> here</div>
-      <div style="font-size:.75rem;margin-top:.3rem;">or click to browse</div>
+      <div>Drop or select <strong>totes.json</strong></div>
+      <div style="font-size:.75rem;margin-top:.3rem;">tap to browse &mdash; drag &amp; drop on PC</div>
     </div>
     <input type="file" id="file-input" accept=".json" style="display:none" onchange="loadFromFile(event)">
-    <p style="font-size:.75rem;color:var(--muted);margin-top:1rem;font-family:'Space Mono',monospace;">&#x26A0; Loading a file will <strong>replace</strong> your current totes. Save first if needed.</p>
+    <p style="font-size:.75rem;color:var(--muted);margin-top:1rem;font-family:'Space Mono',monospace;">&#x26A0; Loading replaces your current totes. Save first if you have unsaved changes.</p>
   </div>
 </div>
 
@@ -440,8 +451,8 @@ function markUnsaved() {
 function markSaved() {
   unsaved = false;
   document.getElementById('unsaved-badge').classList.remove('show');
-  document.getElementById('save-label').innerHTML = '&#x2705; <strong>Saved!</strong> Upload <code>totes.json</code> to OneDrive to sync across devices.';
-  setTimeout(() => { document.getElementById('save-label').innerHTML = '&#x1F4BE; <strong>OneDrive Sync</strong> &mdash; Load your <code>totes.json</code>, make changes, then save it back.'; }, 5000);
+  document.getElementById('save-label').innerHTML = '&#x2705; <strong>Saved!</strong> Now upload <code>totes.json</code> to your OneDrive folder to sync across all devices.';
+  setTimeout(() => { document.getElementById('save-label').innerHTML = '&#x1F4BE; <strong>OneDrive Sync</strong> &mdash; Always load before editing, always save after. Upload <code>totes.json</code> back to OneDrive when done.'; }, 5000);
 }
 
 function genId() { return 'TOTE-' + Math.random().toString(36).substr(2,3).toUpperCase(); }
@@ -475,7 +486,7 @@ function parseJsonFile(file) {
       localStorage.setItem('totetrack_cats', JSON.stringify(categories));
       unsaved = false;
       document.getElementById('unsaved-badge').classList.remove('show');
-      document.getElementById('save-label').innerHTML = '&#x2705; <strong>Loaded!</strong> &mdash; ' + totes.length + ' totes loaded. Make changes then hit <strong>Save to File</strong>.';
+      document.getElementById('save-label').innerHTML = '&#x2705; <strong>Loaded!</strong> &mdash; ' + totes.length + ' totes loaded. Make your changes then tap <strong>Save</strong> and upload to OneDrive.';
       closeModal('load-modal'); renderTotes(); renderFilterBar();
       showToast(totes.length + ' totes loaded!');
       document.getElementById('file-input').value = '';
