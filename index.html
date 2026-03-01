@@ -332,7 +332,7 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
           <p style="font-size:.75rem;color:var(--muted);font-family:'Space Mono',monospace;">Point camera at QR code &mdash; fill the frame</p>
           <button class="btn btn-outline" id="torch-btn" onclick="toggleTorch()" style="padding:.3rem .7rem;font-size:.75rem;display:none;">&#x1F526; Torch</button>
         </div>
-        <div id="scan-debug" style="font-family:monospace;font-size:.7rem;color:var(--muted);margin-top:.3rem;min-height:1.2em;"></div>
+        <div id="scan-debug" style="font-family:monospace;font-size:.78rem;color:var(--orange);margin-top:.4rem;min-height:1.4em;font-weight:700;"></div>
       </div>
       <div id="scan-photo-mode" style="display:none;">
         <div style="text-align:center;padding:1rem;background:var(--surface2);border-radius:8px;border:2px dashed var(--border);">
@@ -738,24 +738,37 @@ function switchScanTab(tab) {
   else { stopCamera(); if (tab==='manual') setTimeout(() => document.getElementById('manual-id-input').focus(), 100); }
 }
 
+function dbg(msg) {
+  const el = document.getElementById('scan-debug');
+  if (el) el.textContent = msg;
+}
+
 async function startCamera() {
+  dbg('Starting camera...');
   function loadJsQR(cb) {
-    if (jsQRLoaded) { cb(); return; }
+    if (jsQRLoaded) { dbg('jsQR ready'); cb(); return; }
+    dbg('Loading jsQR...');
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js';
-    s.onload = () => { jsQRLoaded = true; cb(); }; s.onerror = () => cb();
+    s.onload = () => { jsQRLoaded = true; dbg('jsQR loaded OK'); cb(); };
+    s.onerror = () => { dbg('jsQR FAILED to load'); cb(); };
     document.head.appendChild(s);
   }
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no getUserMedia');
+    dbg('Requesting camera...');
     scanStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment', width:{ ideal:1920 }, height:{ ideal:1080 } } });
     const video = document.getElementById('scanner-video');
-    video.srcObject = scanStream; await video.play();
+    video.srcObject = scanStream;
+    dbg('Camera granted, starting video...');
+    await video.play();
+    dbg('Video playing, loading jsQR...');
     document.getElementById('scan-live-mode').style.display = 'block';
     document.getElementById('scan-photo-mode').style.display = 'none';
     document.getElementById('torch-btn').style.display = 'block';
-    loadJsQR(() => startScanLoop(video));
+    loadJsQR(() => { dbg('Starting scan loop...'); startScanLoop(video); });
   } catch(e) {
+    dbg('Camera error: ' + e.message);
     stopCamera();
     document.getElementById('scan-live-mode').style.display = 'none';
     document.getElementById('scan-photo-mode').style.display = 'block';
