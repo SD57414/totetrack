@@ -805,11 +805,8 @@ async function startScanLoop(video) {
           const barcodes = await detector.detect(video);
           if (barcodes.length > 0) {
             handleScanResult(barcodes[0].rawValue);
-          } else {
-            const el = document.getElementById('scan-debug-log');
-            if (el && el.textContent.indexOf('Scanning') === -1)
           }
-        } catch(e) { dbg('BarcodeDetector error: ' + e.message); }
+        } catch(e) { /* scan error */ }
       }
     }, 150);
     return;
@@ -838,9 +835,6 @@ async function startScanLoop(video) {
 
       if (code && code.data) {
         handleScanResult(code.data);
-      } else {
-        const el = document.getElementById('scan-debug-log');
-        if (el && el.textContent.indexOf('Scanning') === -1)
       }
       scanning = false;
     }
