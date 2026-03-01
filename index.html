@@ -332,7 +332,7 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
           <p style="font-size:.75rem;color:var(--muted);font-family:'Space Mono',monospace;">Point camera at QR code &mdash; fill the frame</p>
           <button class="btn btn-outline" id="torch-btn" onclick="toggleTorch()" style="padding:.3rem .7rem;font-size:.75rem;display:none;">&#x1F526; Torch</button>
         </div>
-        <div id="scan-debug" style="font-family:monospace;font-size:.78rem;color:var(--orange);margin-top:.4rem;min-height:1.4em;font-weight:700;"></div>
+
       </div>
       <div id="scan-photo-mode" style="display:none;">
         <div style="text-align:center;padding:1rem;background:var(--surface2);border-radius:8px;border:2px dashed var(--border);">
@@ -362,6 +362,7 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
       </div>
     </div>
     <div id="scan-result-box"></div>
+    <div id="scan-debug-log" style="font-family:monospace;font-size:.75rem;color:var(--orange);margin-top:.5rem;font-weight:700;padding:.5rem;background:var(--surface2);border-radius:6px;min-height:2rem;white-space:pre-wrap;word-break:break-all;display:none;"></div>
   </div>
 </div>
 
@@ -734,13 +735,18 @@ function switchScanTab(tab) {
   document.getElementById('scan-photo-section').style.display = tab==='photo' ? 'block' : 'none';
   document.getElementById('scan-manual-section').style.display = tab==='manual' ? 'block' : 'none';
   document.getElementById('scan-result-box').innerHTML = '';
+  const log = document.getElementById('scan-debug-log'); if (log) { log.textContent = ''; log.style.display = 'none'; }
   if (tab==='camera') startCamera();
   else { stopCamera(); if (tab==='manual') setTimeout(() => document.getElementById('manual-id-input').focus(), 100); }
 }
 
 function dbg(msg) {
-  const el = document.getElementById('scan-debug');
-  if (el) el.textContent = msg;
+  const el = document.getElementById('scan-debug-log');
+  if (el) {
+    el.style.display = 'block';
+    el.textContent += msg + '\n';
+    el.scrollTop = el.scrollHeight;
+  }
 }
 
 async function startCamera() {
@@ -809,12 +815,12 @@ function startScanLoop(video) {
         code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'attemptBoth' });
       }
 
-      const dbg = document.getElementById('scan-debug');
       if (code && code.data) {
-        if (dbg) dbg.textContent = 'Read: ' + code.data;
+        dbg('Read: ' + code.data);
         handleScanResult(code.data);
       } else {
-        if (dbg) dbg.textContent = 'Scanning... ' + canvas.width + 'x' + canvas.height + (jsQRLoaded ? ' jsQR ready' : ' jsQR loading');
+        const el = document.getElementById('scan-debug-log');
+        if (el && el.textContent.indexOf('Scanning') === -1) dbg('Scanning... ' + canvas.width + 'x' + canvas.height + (jsQRLoaded ? ' jsQR ready' : ' jsQR loading'));
       }
       scanning = false;
     }
@@ -952,7 +958,7 @@ function manualLookup() {
   handleScanResult(val);
 }
 
-function closeScanner() { stopCamera(); closeModal('scanner-modal'); document.getElementById('scan-result-box').innerHTML = ''; }
+function closeScanner() { stopCamera(); closeModal('scanner-modal'); document.getElementById('scan-result-box').innerHTML = ''; const log = document.getElementById('scan-debug-log'); if (log) { log.textContent = ''; log.style.display = 'none'; } }
 
 function highlightCard(id) {
   const card = document.getElementById('card-' + id);
