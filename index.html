@@ -362,7 +362,6 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
       </div>
     </div>
     <div id="scan-result-box"></div>
-    <div id="scan-debug-log" style="font-family:monospace;font-size:.75rem;color:var(--orange);margin-top:.5rem;font-weight:700;padding:.5rem;background:var(--surface2);border-radius:6px;min-height:2rem;white-space:pre-wrap;word-break:break-all;display:none;"></div>
   </div>
 </div>
 
@@ -735,22 +734,13 @@ function switchScanTab(tab) {
   document.getElementById('scan-photo-section').style.display = tab==='photo' ? 'block' : 'none';
   document.getElementById('scan-manual-section').style.display = tab==='manual' ? 'block' : 'none';
   document.getElementById('scan-result-box').innerHTML = '';
-  const log = document.getElementById('scan-debug-log'); if (log) { log.textContent = ''; log.style.display = 'none'; }
   if (tab==='camera') startCamera();
   else { stopCamera(); if (tab==='manual') setTimeout(() => document.getElementById('manual-id-input').focus(), 100); }
 }
 
-function dbg(msg) {
-  const el = document.getElementById('scan-debug-log');
-  if (el) {
-    el.style.display = 'block';
-    el.textContent += msg + '\n';
-    el.scrollTop = el.scrollHeight;
-  }
-}
+function dbg(msg) {}
 
 async function startCamera() {
-  dbg('Starting camera...');
   function loadJsQR(cb) {
     if (jsQRLoaded) { dbg('jsQR ready'); cb(); return; }
     const urls = [
@@ -761,7 +751,6 @@ async function startCamera() {
     let i = 0;
     function tryNext() {
       if (i >= urls.length) { dbg('jsQR failed all CDNs - using BarcodeDetector only'); cb(); return; }
-      dbg('Loading jsQR from ' + urls[i].split('/')[2] + '...');
       const s = document.createElement('script');
       s.src = urls[i++];
       s.onload = () => { jsQRLoaded = true; dbg('jsQR loaded OK'); cb(); };
@@ -772,19 +761,15 @@ async function startCamera() {
   }
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no getUserMedia');
-    dbg('Requesting camera...');
     scanStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment', width:{ ideal:1920 }, height:{ ideal:1080 } } });
     const video = document.getElementById('scanner-video');
     video.srcObject = scanStream;
-    dbg('Camera granted, starting video...');
     await video.play();
-    dbg('Video playing, loading jsQR...');
     document.getElementById('scan-live-mode').style.display = 'block';
     document.getElementById('scan-photo-mode').style.display = 'none';
     document.getElementById('torch-btn').style.display = 'block';
     loadJsQR(() => { dbg('Starting scan loop...'); startScanLoop(video); });
   } catch(e) {
-    dbg('Camera error: ' + e.message);
     stopCamera();
     document.getElementById('scan-live-mode').style.display = 'none';
     document.getElementById('scan-photo-mode').style.display = 'block';
@@ -808,7 +793,6 @@ async function startScanLoop(video) {
 
   // Try native BarcodeDetector first (Android Chrome, modern browsers)
   if ('BarcodeDetector' in window) {
-    dbg('Using native BarcodeDetector');
     let detector;
     try {
       detector = new BarcodeDetector({ formats: ['qr_code'] });
@@ -820,11 +804,10 @@ async function startScanLoop(video) {
         try {
           const barcodes = await detector.detect(video);
           if (barcodes.length > 0) {
-            dbg('BarcodeDetector read: ' + barcodes[0].rawValue);
             handleScanResult(barcodes[0].rawValue);
           } else {
             const el = document.getElementById('scan-debug-log');
-            if (el && el.textContent.indexOf('Scanning') === -1) dbg('Scanning with BarcodeDetector... ' + video.videoWidth + 'x' + video.videoHeight);
+            if (el && el.textContent.indexOf('Scanning') === -1)
           }
         } catch(e) { dbg('BarcodeDetector error: ' + e.message); }
       }
@@ -833,7 +816,6 @@ async function startScanLoop(video) {
   }
 
   // Fallback to jsQR
-  dbg('BarcodeDetector not available, using jsQR');
   let scanning = false;
   scanInterval = setInterval(() => {
     if (scanning) return;
@@ -855,11 +837,10 @@ async function startScanLoop(video) {
       }
 
       if (code && code.data) {
-        dbg('jsQR read: ' + code.data);
         handleScanResult(code.data);
       } else {
         const el = document.getElementById('scan-debug-log');
-        if (el && el.textContent.indexOf('Scanning') === -1) dbg('Scanning with jsQR... ' + canvas.width + 'x' + canvas.height);
+        if (el && el.textContent.indexOf('Scanning') === -1)
       }
       scanning = false;
     }
@@ -997,7 +978,7 @@ function manualLookup() {
   handleScanResult(val);
 }
 
-function closeScanner() { stopCamera(); closeModal('scanner-modal'); document.getElementById('scan-result-box').innerHTML = ''; const log = document.getElementById('scan-debug-log'); if (log) { log.textContent = ''; log.style.display = 'none'; } }
+function closeScanner() { stopCamera(); closeModal('scanner-modal'); document.getElementById('scan-result-box').innerHTML = ''; }
 
 function highlightCard(id) {
   const card = document.getElementById('card-' + id);
