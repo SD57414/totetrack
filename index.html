@@ -100,7 +100,7 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
 .qr-label{margin-top:.75rem;text-align:center;font-family:'Space Mono',monospace;font-size:.75rem;color:var(--muted);}
 .qr-label strong{display:block;font-size:1.1rem;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:800;letter-spacing:.5px;text-transform:uppercase;}
 
-#scanner-video{width:100%;border-radius:8px;background:#000;display:block;}
+#scanner-video{width:100%;border-radius:8px;background:#000;display:block;max-height:280px;object-fit:cover;}
 .scan-overlay{position:relative;border-radius:8px;overflow:hidden;}
 .scan-line{position:absolute;left:0;right:0;height:2px;background:var(--accent2);box-shadow:0 0 8px var(--accent2);animation:scanMove 2s linear infinite;transition:background .2s,box-shadow .2s;}
 .scan-line.success{background:#2d6a4f;box-shadow:0 0 16px #2d6a4f;animation:scanMove 2s linear infinite,scanSuccess .4s ease;}
