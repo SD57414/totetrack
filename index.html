@@ -318,8 +318,9 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     <button class="modal-close" onclick="closeScanner()">&#x2715;</button>
     <h2>Scan QR Code</h2>
     <div class="pill-tabs">
-      <button class="pill-tab active" id="tab-camera" onclick="switchScanTab('camera')">&#x1F4F7; Camera</button>
-      <button class="pill-tab" id="tab-manual" onclick="switchScanTab('manual')">&#x2328; Manual ID</button>
+      <button class="pill-tab active" id="tab-camera" onclick="switchScanTab('camera')">&#x1F4F7; Live</button>
+      <button class="pill-tab" id="tab-photo" onclick="switchScanTab('photo')">&#x1F4F8; Photo</button>
+      <button class="pill-tab" id="tab-manual" onclick="switchScanTab('manual')">&#x2328; Manual</button>
     </div>
     <div id="scan-camera-section">
       <div id="scan-live-mode">
@@ -327,7 +328,10 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
           <video id="scanner-video" autoplay muted playsinline></video>
           <div class="scan-line"></div>
         </div>
-        <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;font-family:'Space Mono',monospace;">Point camera at a ToteTrack QR code</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.5rem;">
+          <p style="font-size:.75rem;color:var(--muted);font-family:'Space Mono',monospace;">Point camera at QR code &mdash; fill the frame</p>
+          <button class="btn btn-outline" id="torch-btn" onclick="toggleTorch()" style="padding:.3rem .7rem;font-size:.75rem;display:none;">&#x1F526; Torch</button>
+        </div>
       </div>
       <div id="scan-photo-mode" style="display:none;">
         <div style="text-align:center;padding:1rem;background:var(--surface2);border-radius:8px;border:2px dashed var(--border);">
@@ -340,6 +344,16 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
         <div id="photo-scan-preview" style="margin-top:.75rem;"></div>
       </div>
     </div>
+    <div id="scan-photo-section" style="display:none;">
+        <div style="text-align:center;padding:1rem;background:var(--surface2);border-radius:8px;border:2px dashed var(--border);">
+          <div style="font-size:2.5rem;margin-bottom:.5rem;">&#x1F4F8;</div>
+          <div style="font-weight:700;margin-bottom:.4rem;">Take a photo of the QR code</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:1rem;font-family:monospace;">Get close &mdash; QR code should fill the frame</div>
+          <button class="btn btn-scan" onclick="document.getElementById('qr-photo-input2').click()" style="width:100%;">&#x1F4F8; Open Camera</button>
+          <input type="file" id="qr-photo-input2" accept="image/*" capture="environment" style="display:none" onchange="processPhotoScan2(event)">
+        </div>
+        <div id="photo-scan-preview2" style="margin-top:.75rem;"></div>
+      </div>
     <div id="scan-manual-section" style="display:none;">
       <div class="form-group">
         <label>Enter Tote ID</label>
@@ -699,16 +713,28 @@ function exportCSV() {
 }
 
 // SCANNER
-function openScannerModal() { openModal('scanner-modal'); switchScanTab('camera'); }
+function openScannerModal() {
+  openModal('scanner-modal');
+  // Preload jsQR so photo mode works instantly
+  if (!jsQRLoaded) {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js';
+    s.onload = () => { jsQRLoaded = true; };
+    document.head.appendChild(s);
+  }
+  switchScanTab('camera');
+}
 
 function switchScanTab(tab) {
   document.getElementById('tab-camera').classList.toggle('active', tab==='camera');
+  document.getElementById('tab-photo').classList.toggle('active', tab==='photo');
   document.getElementById('tab-manual').classList.toggle('active', tab==='manual');
   document.getElementById('scan-camera-section').style.display = tab==='camera' ? 'block' : 'none';
+  document.getElementById('scan-photo-section').style.display = tab==='photo' ? 'block' : 'none';
   document.getElementById('scan-manual-section').style.display = tab==='manual' ? 'block' : 'none';
   document.getElementById('scan-result-box').innerHTML = '';
   if (tab==='camera') startCamera();
-  else { stopCamera(); setTimeout(() => document.getElementById('manual-id-input').focus(), 100); }
+  else { stopCamera(); if (tab==='manual') setTimeout(() => document.getElementById('manual-id-input').focus(), 100); }
 }
 
 async function startCamera() {
@@ -726,6 +752,7 @@ async function startCamera() {
     video.srcObject = scanStream; await video.play();
     document.getElementById('scan-live-mode').style.display = 'block';
     document.getElementById('scan-photo-mode').style.display = 'none';
+    document.getElementById('torch-btn').style.display = 'block';
     loadJsQR(() => startScanLoop(video));
   } catch(e) {
     stopCamera();
@@ -740,12 +767,41 @@ function startScanLoop(video) {
   scanInterval = setInterval(() => {
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
       canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+
+      // Draw frame
       ctx.drawImage(video, 0, 0);
+
+      // Boost contrast to help with printed labels
+      ctx.filter = 'contrast(1.4) brightness(1.1)';
+      ctx.drawImage(video, 0, 0);
+      ctx.filter = 'none';
+
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imgData.data, imgData.width, imgData.height);
+
+      // Try normal scan first
+      let code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'attemptBoth' });
+
       if (code && code.data) handleScanResult(code.data);
     }
-  }, 300);
+  }, 100); // increased from 300ms to 100ms
+}
+
+let torchOn = false;
+async function toggleTorch() {
+  if (!scanStream) return;
+  const track = scanStream.getVideoTracks()[0];
+  if (!track) return;
+  try {
+    torchOn = !torchOn;
+    await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+    const btn = document.getElementById('torch-btn');
+    btn.textContent = torchOn ? '\uD83D\uDD26 Torch On' : '\uD83D\uDD26 Torch';
+    btn.style.background = torchOn ? 'var(--orange)' : '';
+    btn.style.color = torchOn ? '#fff' : '';
+    btn.style.borderColor = torchOn ? 'var(--orange)' : '';
+  } catch(e) {
+    showToast('Torch not supported on this device');
+  }
 }
 
 function processPhotoScan(e) {
@@ -768,7 +824,30 @@ function processPhotoScan(e) {
   img.src = url;
 }
 
+function processPhotoScan2(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const preview = document.getElementById('photo-scan-preview2');
+  preview.innerHTML = '<div style="text-align:center;color:var(--muted);font-family:monospace;font-size:.8rem;">Scanning image&hellip;</div>';
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width; canvas.height = img.height;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+    if (typeof jsQR === 'undefined') { preview.innerHTML = '<div class="scan-result notfound">Scanner not loaded yet. Try again.</div>'; return; }
+    const imgData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imgData.data, imgData.width, imgData.height);
+    if (code && code.data) { handleScanResult(code.data); }
+    else { preview.innerHTML = '<div class="scan-result notfound">No QR code found. Try getting closer and ensure good lighting.</div>'; }
+    e.target.value = '';
+  };
+  img.src = url;
+}
+
 function stopCamera() {
+  torchOn = false;
+  const btn = document.getElementById('torch-btn');
+  if (btn) { btn.style.display = 'none'; btn.textContent = '\uD83D\uDD26 Torch'; btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = ''; }
   if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
   clearInterval(scanInterval); scanInterval = null;
 }
