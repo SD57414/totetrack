@@ -753,12 +753,22 @@ async function startCamera() {
   dbg('Starting camera...');
   function loadJsQR(cb) {
     if (jsQRLoaded) { dbg('jsQR ready'); cb(); return; }
-    dbg('Loading jsQR...');
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js';
-    s.onload = () => { jsQRLoaded = true; dbg('jsQR loaded OK'); cb(); };
-    s.onerror = () => { dbg('jsQR FAILED to load'); cb(); };
-    document.head.appendChild(s);
+    const urls = [
+      'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js',
+      'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js'
+    ];
+    let i = 0;
+    function tryNext() {
+      if (i >= urls.length) { dbg('jsQR failed all CDNs - using BarcodeDetector only'); cb(); return; }
+      dbg('Loading jsQR from ' + urls[i].split('/')[2] + '...');
+      const s = document.createElement('script');
+      s.src = urls[i++];
+      s.onload = () => { jsQRLoaded = true; dbg('jsQR loaded OK'); cb(); };
+      s.onerror = () => { dbg('CDN failed, trying next...'); tryNext(); };
+      document.head.appendChild(s);
+    }
+    tryNext();
   }
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no getUserMedia');
@@ -778,7 +788,7 @@ async function startCamera() {
     stopCamera();
     document.getElementById('scan-live-mode').style.display = 'none';
     document.getElementById('scan-photo-mode').style.display = 'block';
-    loadJsQR(() => {});
+    loadJsQR(() => { dbg('Photo mode ready'); });
   }
 }
 
@@ -1067,10 +1077,21 @@ renderFilterBar();
 
 // Load jsQR immediately on page load so photo scan is always ready
 (function() {
-  const s = document.createElement('script');
-  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js';
-  s.onload = () => { jsQRLoaded = true; };
-  document.head.appendChild(s);
+  const urls = [
+    'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js',
+    'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js'
+  ];
+  let i = 0;
+  function tryNext() {
+    if (i >= urls.length) return;
+    const s = document.createElement('script');
+    s.src = urls[i++];
+    s.onload = () => { jsQRLoaded = true; };
+    s.onerror = () => tryNext();
+    document.head.appendChild(s);
+  }
+  tryNext();
 })();
 </script>
 </body>
