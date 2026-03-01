@@ -793,22 +793,51 @@ function boostContrast(imageData) {
   return imageData;
 }
 
-function startScanLoop(video) {
+async function startScanLoop(video) {
   const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d');
+
+  // Try native BarcodeDetector first (Android Chrome, modern browsers)
+  if ('BarcodeDetector' in window) {
+    dbg('Using native BarcodeDetector');
+    let detector;
+    try {
+      detector = new BarcodeDetector({ formats: ['qr_code'] });
+    } catch(e) {
+      detector = new BarcodeDetector();
+    }
+    scanInterval = setInterval(async () => {
+      if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
+        try {
+          const barcodes = await detector.detect(video);
+          if (barcodes.length > 0) {
+            dbg('BarcodeDetector read: ' + barcodes[0].rawValue);
+            handleScanResult(barcodes[0].rawValue);
+          } else {
+            const el = document.getElementById('scan-debug-log');
+            if (el && el.textContent.indexOf('Scanning') === -1) dbg('Scanning with BarcodeDetector... ' + video.videoWidth + 'x' + video.videoHeight);
+          }
+        } catch(e) { dbg('BarcodeDetector error: ' + e.message); }
+      }
+    }, 150);
+    return;
+  }
+
+  // Fallback to jsQR
+  dbg('BarcodeDetector not available, using jsQR');
   let scanning = false;
   scanInterval = setInterval(() => {
-    if (scanning) return; // prevent overlapping scans
+    if (scanning) return;
     if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
       scanning = true;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
 
-      // Try 1: normal scan
+      // Try normal scan
       let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       let code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'attemptBoth' });
 
-      // Try 2: contrast boosted scan
+      // Try contrast boosted
       if (!code) {
         imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         boostContrast(imgData);
@@ -816,11 +845,11 @@ function startScanLoop(video) {
       }
 
       if (code && code.data) {
-        dbg('Read: ' + code.data);
+        dbg('jsQR read: ' + code.data);
         handleScanResult(code.data);
       } else {
         const el = document.getElementById('scan-debug-log');
-        if (el && el.textContent.indexOf('Scanning') === -1) dbg('Scanning... ' + canvas.width + 'x' + canvas.height + (jsQRLoaded ? ' jsQR ready' : ' jsQR loading'));
+        if (el && el.textContent.indexOf('Scanning') === -1) dbg('Scanning with jsQR... ' + canvas.width + 'x' + canvas.height);
       }
       scanning = false;
     }
