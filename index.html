@@ -210,7 +210,8 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     font-family:'Syne',sans-serif;font-size:.6rem;font-weight:600;cursor:pointer;
     padding:.4rem 0;transition:color .15s;
   }
-  .bottom-nav-btn .nav-icon{font-size:1.3rem;line-height:1;}
+  .bottom-nav-btn .nav-icon{font-size:1.15rem;line-height:1;}
+  .bottom-nav-btn{font-size:.55rem;}
   .bottom-nav-btn.primary{color:var(--accent2);}
   .bottom-nav-btn:active{color:#f5f0e8;}
 }
@@ -416,13 +417,13 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
 <!-- MOBILE BOTTOM NAV -->
 <nav class="bottom-nav">
   <button class="bottom-nav-btn primary" onclick="openNewToteModal()">
-    <span class="nav-icon">&#x2795;</span>New Tote
+    <span class="nav-icon">&#x2795;</span>New
   </button>
   <button class="bottom-nav-btn" onclick="openScannerModal()">
-    <span class="nav-icon">&#x1F4F7;</span>Scan QR
+    <span class="nav-icon">&#x1F4F7;</span>Scan
   </button>
-  <button class="bottom-nav-btn" onclick="openLoadModal()">
-    <span class="nav-icon">&#x1F4C2;</span>Load
+  <button class="bottom-nav-btn" onclick="toggleAllCards()">
+    <span class="nav-icon" id="mobile-collapse-icon">&#x229F;</span><span id="mobile-collapse-label">Collapse</span>
   </button>
   <button class="bottom-nav-btn" onclick="saveToFile()">
     <span class="nav-icon">&#x1F4BE;</span>Save
@@ -559,6 +560,10 @@ function toggleAllCards() {
   document.querySelectorAll('.tote-body').forEach(b => b.classList.toggle('collapsed', allCollapsed));
   document.querySelectorAll('.collapse-btn').forEach(b => b.classList.toggle('collapsed', allCollapsed));
   document.getElementById('collapse-all-btn').textContent = allCollapsed ? '\u229e Expand All' : '\u229f Collapse All';
+  const mobileIcon = document.getElementById('mobile-collapse-icon');
+  const mobileLabel = document.getElementById('mobile-collapse-label');
+  if (mobileIcon) mobileIcon.textContent = allCollapsed ? '\u229e' : '\u229f';
+  if (mobileLabel) mobileLabel.textContent = allCollapsed ? 'Expand' : 'Collapse';
 }
 
 // FILTER BAR
