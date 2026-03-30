@@ -136,29 +136,95 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
 @keyframes toastIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 
 @media print{
-  @page { size: 8.5in 11in; margin: 1in 0.85in; }
-  body>*:not(#print-area){display:none!important;}
+  @page {
+    size: letter portrait;
+    margin: 1in 0.85in;
+  }
+  body { margin:0; padding:0; }
+  body>*:not(#print-area){ display:none!important; }
   #print-area{
     display:grid!important;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
+    grid-template-columns: 2in 2in;
+    grid-auto-rows: 3in;
+    gap: 0 0.8in;
     padding: 0;
-    width: 100%;
+    margin: 0;
+    width: 4.8in;
   }
   .print-label{
-    width: 100%;
+    width: 2in;
     height: 3in;
-    box-sizing:border-box;
+    box-sizing: border-box;
     padding: 2mm;
-    text-align:center;
-    font-family:Arial,sans-serif;
-    overflow:hidden;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
     border: 0.3mm dashed #bbb;
-    page-break-inside:avoid;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:flex-start;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+  .print-label-title {
+    font-weight: 900;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.2mm;
+    line-height: 1.1;
+    text-align: center;
+    padding-bottom: 1.5mm;
+    border-bottom: 0.3mm solid #ccc;
+    margin-bottom: 1.5mm;
+    word-break: break-word;
+  }
+  .print-label-meta {
+    font-size: 5.5pt;
+    text-align: center;
+    margin-bottom: 1.5mm;
+    color: #444;
+  }
+  .print-label-body {
+    display: flex;
+    flex-direction: row;
+    gap: 2mm;
+    flex: 1;
+    overflow: hidden;
+  }
+  .print-label-qr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
+  }
+  .print-label-qr img {
+    width: 22mm;
+    height: 22mm;
+    display: block;
+  }
+  .print-label-qr-id {
+    font-family: monospace;
+    font-size: 5.5pt;
+    font-weight: bold;
+    color: #1a1a2e;
+    margin-top: 1mm;
+    letter-spacing: 0.3mm;
+    text-align: center;
+  }
+  .print-label-items {
+    flex: 1;
+    overflow: hidden;
+    border-left: 0.3mm solid #eee;
+    padding-left: 2mm;
+  }
+  .print-label-items div {
+    font-size: 5.5pt;
+    padding: 0.4mm 0;
+    border-bottom: 0.2mm solid #f0f0f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 #print-area{display:none;}
@@ -779,19 +845,30 @@ function printSingleLabel() {
 function buildPrintArea(arr, urls, includeItems = true) {
   document.getElementById('print-area').innerHTML = arr.map((t, i) => {
     const cat = t.category ? categories.find(c => c.name === t.category) : null;
-    const catLine = cat
-      ? '<div style="font-size:6pt;font-weight:bold;color:' + cat.color + ';margin-bottom:1mm;padding:0.5mm 2mm;background:' + cat.color + '18;border-radius:2px;display:inline-block;">&#x1F3F7; ' + t.category + '</div>'
-      : '';
-    const location = t.location ? '<div style="font-size:6pt;color:#2d6a4f;margin-bottom:1mm;">' + t.location + '</div>' : '';
-    const itemLines = t.items.slice(0, 6).map(item => '<div style="font-size:5.5pt;padding:0.3mm 0;text-align:left;">&#x203A; ' + item + '</div>').join('');
-    const moreItems = t.items.length > 6 ? '<div style="font-size:5.5pt;color:#888;text-align:left;">+ ' + (t.items.length-6) + ' more</div>' : '';
+    const catText = cat ? ' • ' + t.category : '';
+    const locText = t.location ? ' • ' + t.location : '';
+    const meta = (catText + locText).replace(/^ • /, '') || '';
+    // Show more items when no items section or when items shown vertically
+    const maxItems = includeItems ? 14 : 0;
+    const itemLines = t.items.slice(0, maxItems).map(item =>
+      '<div>› ' + item + '</div>'
+    ).join('');
+    const moreItems = t.items.length > maxItems && includeItems
+      ? '<div style="color:#888;">+' + (t.items.length - maxItems) + ' more</div>' : '';
+
     return '<div class="print-label">' +
-      '<div style="font-family:Arial,sans-serif;font-weight:900;font-size:10pt;text-transform:uppercase;letter-spacing:0.3mm;margin-bottom:1mm;line-height:1.1;word-break:break-word;">' + t.name + '</div>' +
-      catLine + location +
-      '<img src="' + urls[i] + '" style="width:28mm;height:28mm;display:block;">' +
-      '<div style="font-family:monospace;font-size:8pt;font-weight:bold;color:#1a1a2e;margin:1mm 0;letter-spacing:0.5mm;">' + t.id + '</div>' +
-      (includeItems && t.items.length > 0 ? '<div style="border-top:0.3mm solid #ccc;padding-top:1mm;width:100%;">' + itemLines + moreItems + '</div>' : '') +
-      '</div>';
+      '<div class="print-label-title">' + t.name + '</div>' +
+      (meta ? '<div class="print-label-meta">' + meta + '</div>' : '') +
+      '<div class="print-label-body">' +
+        '<div class="print-label-qr">' +
+          '<img src="' + urls[i] + '">' +
+          '<div class="print-label-qr-id">' + t.id + '</div>' +
+        '</div>' +
+        (includeItems && t.items.length > 0
+          ? '<div class="print-label-items">' + itemLines + moreItems + '</div>'
+          : '') +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
