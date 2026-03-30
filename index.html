@@ -425,11 +425,15 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
   <div class="modal" style="max-width:540px;">
     <button class="modal-close" onclick="closeModal('print-modal')">&#x2715;</button>
     <h2>&#x1F5A8; Print Labels</h2>
-    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap;align-items:center;">
+    <div style="display:flex;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap;align-items:center;">
       <button class="btn btn-outline" style="padding:.35rem .8rem;font-size:.78rem;" onclick="selectAllPrint(true)">Select All</button>
       <button class="btn btn-outline" style="padding:.35rem .8rem;font-size:.78rem;" onclick="selectAllPrint(false)">Deselect All</button>
       <span id="print-count" style="font-family:'Space Mono',monospace;font-size:.75rem;color:var(--muted);margin-left:auto;"></span>
     </div>
+    <label style="display:flex;align-items:center;gap:.6rem;padding:.5rem .75rem;background:var(--surface2);border-radius:8px;margin-bottom:.75rem;cursor:pointer;font-size:.85rem;font-weight:600;">
+      <input type="checkbox" id="print-include-items" checked style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer;">
+      Include item list on labels
+    </label>
     <div id="print-tote-list" style="max-height:340px;overflow-y:auto;border:2px solid var(--border);border-radius:8px;"></div>
     <div style="display:flex;gap:.75rem;margin-top:1rem;">
       <button class="btn btn-primary" style="flex:1;" onclick="printSelected()">&#x1F5A8; Print Selected</button>
@@ -746,6 +750,7 @@ function printSelected() {
     .map(cb => totes[parseInt(cb.dataset.index)])
     .filter(Boolean);
   if (selected.length === 0) { showToast('No totes selected!'); return; }
+  const includeItems = document.getElementById('print-include-items').checked;
   closeModal('print-modal');
   const offscreen = document.createElement('div');
   offscreen.style.cssText = 'position:absolute;left:-9999px;top:0;';
@@ -758,7 +763,7 @@ function printSelected() {
     setTimeout(() => {
       const c = el.querySelector('canvas'); if (c) dataUrls[i] = c.toDataURL();
       done++;
-      if (done === selected.length) { document.body.removeChild(offscreen); buildPrintArea(selected, dataUrls); window.print(); }
+      if (done === selected.length) { document.body.removeChild(offscreen); buildPrintArea(selected, dataUrls, includeItems); window.print(); }
     }, 400 + i * 60);
   });
 }
@@ -766,13 +771,13 @@ function printSelected() {
 function printSingleLabel() {
   const canvas = document.querySelector('#qr-container canvas');
   if (!canvas || !currentQRTote) return;
-  buildPrintArea([currentQRTote], [canvas.toDataURL()]);
+  buildPrintArea([currentQRTote], [canvas.toDataURL()], true);
   window.print();
 }
 
 
 
-function buildPrintArea(arr, urls) {
+function buildPrintArea(arr, urls, includeItems = true) {
   document.getElementById('print-area').innerHTML = arr.map((t, i) => {
     const cat = t.category ? categories.find(c => c.name === t.category) : null;
     const catLine = cat
@@ -786,7 +791,7 @@ function buildPrintArea(arr, urls) {
       catLine + location +
       '<img src="' + urls[i] + '" style="width:28mm;height:28mm;display:block;">' +
       '<div style="font-family:monospace;font-size:8pt;font-weight:bold;color:#1a1a2e;margin:1mm 0;letter-spacing:0.5mm;">' + t.id + '</div>' +
-      (t.items.length > 0 ? '<div style="border-top:0.3mm solid #ccc;padding-top:1mm;width:100%;">' + itemLines + moreItems + '</div>' : '') +
+      (includeItems && t.items.length > 0 ? '<div style="border-top:0.3mm solid #ccc;padding-top:1mm;width:100%;">' + itemLines + moreItems + '</div>' : '') +
       '</div>';
   }).join('');
 }
