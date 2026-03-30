@@ -246,7 +246,7 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
   <button class="btn btn-primary mobile-hide" onclick="openNewToteModal()">+ New Tote</button>
   <button class="btn btn-scan mobile-hide" onclick="openScannerModal()">&#x1F4F7; Scan QR</button>
   <button class="btn btn-success" onclick="exportCSV()">&#x2193; CSV</button>
-  <button class="btn btn-outline" onclick="printAllLabels()">&#x1F5A8; Print All</button>
+  <button class="btn btn-outline" onclick="openPrintModal()">&#x1F5A8; Print Labels</button>
   <button class="btn btn-outline mobile-hide" id="collapse-all-btn" onclick="toggleAllCards()">&#x229F; Collapse All</button>
   <button class="btn btn-outline mobile-hide" onclick="openModal('cats-modal')">&#x1F3F7; Categories</button>
 </div>
@@ -269,11 +269,11 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     <h2 id="modal-title">New Tote</h2>
     <div class="form-group">
       <label>Tote Name</label>
-      <input type="text" id="tote-name" placeholder="e.g. Winter Clothes, Kitchen Tools&hellip;">
+      <input type="text" id="tote-name" autocapitalize="words" spellcheck="false" placeholder="e.g. Winter Clothes, Kitchen Tools&hellip;">
     </div>
     <div class="form-group">
       <label>Location <span style="font-weight:400;color:var(--muted);font-size:.8rem;">(optional)</span></label>
-      <input type="text" id="tote-location" placeholder="e.g. Garage Shelf 2, Basement&hellip;">
+      <input type="text" id="tote-location" autocapitalize="words" spellcheck="false" placeholder="e.g. Garage Shelf 2, Basement&hellip;">
     </div>
     <div class="form-group">
       <label>Category <span style="font-weight:400;color:var(--muted);font-size:.8rem;">(optional)</span></label>
@@ -281,7 +281,7 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     </div>
     <div class="form-group">
       <label>Contents (one item per line)</label>
-      <textarea id="tote-contents" placeholder="Red sweater&#10;Christmas lights&#10;Ornaments&hellip;"></textarea>
+      <textarea id="tote-contents" autocapitalize="words" spellcheck="false" placeholder="Red sweater&#10;Christmas lights&#10;Ornaments&hellip;"></textarea>
     </div>
     <div style="display:flex;gap:.75rem;margin-top:.5rem;">
       <button class="btn btn-primary" style="flex:1" onclick="saveTote()">Save Tote</button>
@@ -359,7 +359,7 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     <div id="scan-manual-section" style="display:none;">
       <div class="form-group">
         <label>Enter Tote ID</label>
-        <input type="text" id="manual-id-input" placeholder="e.g. TOTE-AB3" oninput="manualLookup()" style="text-transform:uppercase;">
+        <input type="text" id="manual-id-input" autocapitalize="words" spellcheck="false" placeholder="e.g. TOTE-AB3" oninput="manualLookup()" style="text-transform:uppercase;">
       </div>
     </div>
     <div id="scan-result-box"></div>
@@ -398,6 +398,24 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
   </div>
 </div>
 
+<!-- PRINT SELECTION MODAL -->
+<div class="modal-overlay" id="print-modal">
+  <div class="modal" style="max-width:540px;">
+    <button class="modal-close" onclick="closeModal('print-modal')">&#x2715;</button>
+    <h2>&#x1F5A8; Print Labels</h2>
+    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-outline" style="padding:.35rem .8rem;font-size:.78rem;" onclick="selectAllPrint(true)">Select All</button>
+      <button class="btn btn-outline" style="padding:.35rem .8rem;font-size:.78rem;" onclick="selectAllPrint(false)">Deselect All</button>
+      <span id="print-count" style="font-family:'Space Mono',monospace;font-size:.75rem;color:var(--muted);margin-left:auto;"></span>
+    </div>
+    <div id="print-tote-list" style="max-height:340px;overflow-y:auto;border:2px solid var(--border);border-radius:8px;"></div>
+    <div style="display:flex;gap:.75rem;margin-top:1rem;">
+      <button class="btn btn-primary" style="flex:1;" onclick="printSelected()">&#x1F5A8; Print Selected</button>
+      <button class="btn btn-outline" onclick="closeModal('print-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- CATEGORIES MODAL -->
 <div class="modal-overlay" id="cats-modal">
   <div class="modal">
@@ -405,7 +423,7 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     <h2>&#x1F3F7; Manage Categories</h2>
     <ul class="cat-list" id="cat-list"></ul>
     <div class="cat-add-row">
-      <input type="text" id="new-cat-name" placeholder="New category name&hellip;" onkeydown="if(event.key==='Enter')addCategory()" style="flex:1;padding:.6rem .9rem;border:2px solid var(--border);border-radius:6px;font-family:'Space Mono',monospace;font-size:.85rem;background:var(--bg);color:var(--text);outline:none;">
+      <input type="text" id="new-cat-name" autocapitalize="words" spellcheck="false" placeholder="New category name&hellip;" onkeydown="if(event.key==='Enter')addCategory()" style="flex:1;padding:.6rem .9rem;border:2px solid var(--border);border-radius:6px;font-family:'Space Mono',monospace;font-size:.85rem;background:var(--bg);color:var(--text);outline:none;">
       <input type="color" id="new-cat-color" value="#e63946" style="width:44px;height:40px;border:2px solid var(--border);border-radius:6px;cursor:pointer;padding:2px;">
       <button class="btn btn-primary" onclick="addCategory()">+ Add</button>
     </div>
@@ -670,6 +688,59 @@ function downloadQR() {
   }, 100);
 }
 
+function openPrintModal() {
+  if (totes.length === 0) { showToast('No totes to print!'); return; }
+  const list = document.getElementById('print-tote-list');
+  list.innerHTML = totes.map((t, i) => {
+    const cat = t.category ? categories.find(c => c.name === t.category) : null;
+    const catBadge = cat ? '<span style="font-size:.68rem;padding:1px 6px;border-radius:3px;background:' + cat.color + '22;color:' + cat.color + ';border:1px solid ' + cat.color + '44;margin-left:.4rem;">' + escHtml(cat.name) + '</span>' : '';
+    return '<label style="display:flex;align-items:center;gap:.75rem;padding:.6rem .9rem;border-bottom:1px solid var(--surface2);cursor:pointer;font-family:Space Mono,monospace;font-size:.82rem;" onclick="updatePrintCount()">' +
+      '<input type="checkbox" class="print-checkbox" data-index="' + i + '" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">' +
+      '<div>' +
+        '<div style="font-family:Barlow Condensed,sans-serif;font-weight:800;font-size:1rem;text-transform:uppercase;">' + escHtml(t.name) + catBadge + '</div>' +
+        '<div style="font-size:.7rem;color:var(--muted);">' + t.id + (t.location ? ' &nbsp;&middot;&nbsp; ' + escHtml(t.location) : '') + ' &nbsp;&middot;&nbsp; ' + t.items.length + ' items</div>' +
+      '</div>' +
+    '</label>';
+  }).join('');
+  updatePrintCount();
+  openModal('print-modal');
+}
+
+function updatePrintCount() {
+  setTimeout(() => {
+    const checked = document.querySelectorAll('.print-checkbox:checked').length;
+    const el = document.getElementById('print-count');
+    if (el) el.textContent = checked + ' of ' + totes.length + ' selected';
+  }, 0);
+}
+
+function selectAllPrint(checked) {
+  document.querySelectorAll('.print-checkbox').forEach(cb => cb.checked = checked);
+  updatePrintCount();
+}
+
+function printSelected() {
+  const selected = Array.from(document.querySelectorAll('.print-checkbox:checked'))
+    .map(cb => totes[parseInt(cb.dataset.index)])
+    .filter(Boolean);
+  if (selected.length === 0) { showToast('No totes selected!'); return; }
+  closeModal('print-modal');
+  const offscreen = document.createElement('div');
+  offscreen.style.cssText = 'position:absolute;left:-9999px;top:0;';
+  document.body.appendChild(offscreen);
+  const dataUrls = new Array(selected.length).fill('');
+  let done = 0;
+  selected.forEach((tote, i) => {
+    const el = document.createElement('div'); offscreen.appendChild(el);
+    new QRCode(el, { text:'TOTETRACK:'+tote.id, width:250, height:250, colorDark:'#1a1a2e', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
+    setTimeout(() => {
+      const c = el.querySelector('canvas'); if (c) dataUrls[i] = c.toDataURL();
+      done++;
+      if (done === selected.length) { document.body.removeChild(offscreen); buildPrintArea(selected, dataUrls); window.print(); }
+    }, 400 + i * 60);
+  });
+}
+
 function printSingleLabel() {
   const canvas = document.querySelector('#qr-container canvas');
   if (!canvas || !currentQRTote) return;
@@ -677,23 +748,7 @@ function printSingleLabel() {
   window.print();
 }
 
-function printAllLabels() {
-  if (totes.length === 0) { showToast('No totes to print!'); return; }
-  const offscreen = document.createElement('div');
-  offscreen.style.cssText = 'position:absolute;left:-9999px;top:0;';
-  document.body.appendChild(offscreen);
-  const dataUrls = new Array(totes.length).fill('');
-  let done = 0;
-  totes.forEach((tote, i) => {
-    const el = document.createElement('div'); offscreen.appendChild(el);
-    new QRCode(el, { text:'TOTETRACK:'+tote.id, width:250, height:250, colorDark:'#1a1a2e', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
-    setTimeout(() => {
-      const c = el.querySelector('canvas'); if (c) dataUrls[i] = c.toDataURL();
-      done++;
-      if (done === totes.length) { document.body.removeChild(offscreen); buildPrintArea(totes, dataUrls); window.print(); }
-    }, 400 + i * 60);
-  });
-}
+
 
 function buildPrintArea(arr, urls) {
   document.getElementById('print-area').innerHTML = arr.map((t, i) => {
