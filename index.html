@@ -163,7 +163,7 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     page-break-inside: avoid;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
     justify-content: flex-start;
   }
   .print-label-title {
@@ -173,55 +173,58 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     letter-spacing: 0.2mm;
     line-height: 1.1;
     text-align: center;
-    padding-bottom: 1.5mm;
+    width: 100%;
+    padding-bottom: 1mm;
     border-bottom: 0.3mm solid #ccc;
-    margin-bottom: 1.5mm;
+    margin-bottom: 1mm;
     word-break: break-word;
   }
   .print-label-meta {
     font-size: 5.5pt;
     text-align: center;
-    margin-bottom: 1.5mm;
+    margin-bottom: 1mm;
     color: #444;
+    width: 100%;
   }
   .print-label-body {
     display: flex;
-    flex-direction: row;
-    gap: 2mm;
+    flex-direction: column;
+    align-items: center;
     flex: 1;
     overflow: hidden;
+    width: 100%;
   }
   .print-label-qr {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    flex-shrink: 0;
   }
   .print-label-qr img {
-    width: 22mm;
-    height: 22mm;
+    width: 20mm;
+    height: 20mm;
     display: block;
   }
   .print-label-qr-id {
     font-family: monospace;
-    font-size: 5.5pt;
+    font-size: 6pt;
     font-weight: bold;
     color: #1a1a2e;
-    margin-top: 1mm;
+    margin-top: 0.5mm;
     letter-spacing: 0.3mm;
     text-align: center;
   }
   .print-label-items {
-    flex: 1;
+    width: 100%;
+    border-top: 0.3mm solid #ccc;
+    padding-top: 1mm;
+    margin-top: 1mm;
     overflow: hidden;
-    border-left: 0.3mm solid #eee;
-    padding-left: 2mm;
   }
   .print-label-items div {
     font-size: 5.5pt;
-    padding: 0.4mm 0;
+    padding: 0.3mm 0;
     border-bottom: 0.2mm solid #f0f0f0;
+    text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -849,7 +852,7 @@ function buildPrintArea(arr, urls, includeItems = true) {
     const locText = t.location ? ' • ' + t.location : '';
     const meta = (catText + locText).replace(/^ • /, '') || '';
     // Show more items when no items section or when items shown vertically
-    const maxItems = includeItems ? 14 : 0;
+    const maxItems = includeItems ? 8 : 0;
     const itemLines = t.items.slice(0, maxItems).map(item =>
       '<div>› ' + item + '</div>'
     ).join('');
