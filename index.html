@@ -155,7 +155,8 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     width: 2in;
     height: 3in;
     box-sizing: border-box;
-    padding: 2mm;
+    padding: 3mm 2mm 2mm 2mm;
+    text-align: center;
     font-family: Arial, sans-serif;
     overflow: hidden;
     border: 0.3mm dashed #bbb;
@@ -165,69 +166,6 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-  }
-  .print-label-title {
-    font-weight: 900;
-    font-size: 9pt;
-    text-transform: uppercase;
-    letter-spacing: 0.2mm;
-    line-height: 1.1;
-    text-align: center;
-    width: 100%;
-    padding-bottom: 1mm;
-    border-bottom: 0.3mm solid #ccc;
-    margin-bottom: 1mm;
-    word-break: break-word;
-  }
-  .print-label-meta {
-    font-size: 5.5pt;
-    text-align: center;
-    margin-bottom: 1mm;
-    color: #444;
-    width: 100%;
-  }
-  .print-label-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 1;
-    overflow: hidden;
-    width: 100%;
-  }
-  .print-label-qr {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .print-label-qr img {
-    width: 20mm;
-    height: 20mm;
-    display: block;
-  }
-  .print-label-qr-id {
-    font-family: monospace;
-    font-size: 6pt;
-    font-weight: bold;
-    color: #1a1a2e;
-    margin-top: 0.5mm;
-    letter-spacing: 0.3mm;
-    text-align: center;
-  }
-  .print-label-items {
-    width: 100%;
-    border-top: 0.3mm solid #ccc;
-    padding-top: 1mm;
-    margin-top: 1mm;
-    overflow: hidden;
-  }
-  .print-label-items div {
-    font-size: 5.5pt;
-    padding: 0.3mm 0;
-    border-bottom: 0.2mm solid #f0f0f0;
-    text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }
 #print-area{display:none;}
@@ -848,30 +786,19 @@ function printSingleLabel() {
 function buildPrintArea(arr, urls, includeItems = true) {
   document.getElementById('print-area').innerHTML = arr.map((t, i) => {
     const cat = t.category ? categories.find(c => c.name === t.category) : null;
-    const catText = cat ? ' • ' + t.category : '';
-    const locText = t.location ? ' • ' + t.location : '';
-    const meta = (catText + locText).replace(/^ • /, '') || '';
-    // Show more items when no items section or when items shown vertically
-    const maxItems = includeItems ? 8 : 0;
-    const itemLines = t.items.slice(0, maxItems).map(item =>
-      '<div>› ' + item + '</div>'
-    ).join('');
-    const moreItems = t.items.length > maxItems && includeItems
-      ? '<div style="color:#888;">+' + (t.items.length - maxItems) + ' more</div>' : '';
-
+    const catLine = cat
+      ? '<div style="font-size:6pt;font-weight:bold;color:' + cat.color + ';margin-bottom:1mm;padding:0.5mm 2mm;background:' + cat.color + '18;border-radius:2px;display:inline-block;">&#x1F3F7; ' + t.category + '</div>'
+      : '';
+    const location = t.location ? '<div style="font-size:6pt;color:#2d6a4f;margin-bottom:1mm;">' + t.location + '</div>' : '';
+    const itemLines = t.items.slice(0, 6).map(item => '<div style="font-size:5.5pt;padding:0.3mm 0;text-align:left;">&#x203A; ' + item + '</div>').join('');
+    const moreItems = t.items.length > 6 ? '<div style="font-size:5.5pt;color:#888;text-align:left;">+ ' + (t.items.length-6) + ' more</div>' : '';
     return '<div class="print-label">' +
-      '<div class="print-label-title">' + t.name + '</div>' +
-      (meta ? '<div class="print-label-meta">' + meta + '</div>' : '') +
-      '<div class="print-label-body">' +
-        '<div class="print-label-qr">' +
-          '<img src="' + urls[i] + '">' +
-          '<div class="print-label-qr-id">' + t.id + '</div>' +
-        '</div>' +
-        (includeItems && t.items.length > 0
-          ? '<div class="print-label-items">' + itemLines + moreItems + '</div>'
-          : '') +
-      '</div>' +
-    '</div>';
+      '<div style="font-family:Arial,sans-serif;font-weight:900;font-size:10pt;text-transform:uppercase;letter-spacing:0.3mm;margin-bottom:1mm;line-height:1.1;word-break:break-word;">' + t.name + '</div>' +
+      catLine + location +
+      '<img src="' + urls[i] + '" style="width:28mm;height:28mm;display:block;">' +
+      '<div style="font-family:monospace;font-size:8pt;font-weight:bold;color:#1a1a2e;margin:1mm 0;letter-spacing:0.5mm;">' + t.id + '</div>' +
+      (includeItems && t.items.length > 0 ? '<div style="border-top:0.3mm solid #ccc;padding-top:1mm;width:100%;">' + itemLines + moreItems + '</div>' : '') +
+      '</div>';
   }).join('');
 }
 
