@@ -137,23 +137,25 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
 
 @media print{
   @page {
-    size: letter portrait;
-    margin: 0.85in 0.5in;
+    size: 8.5in 11in portrait;
+    margin: 0;
   }
   body { margin:0; padding:0; }
   body>*:not(#print-area){ display:none!important; }
   #print-area{
     display:grid!important;
-    grid-template-columns: 3in 3in;
-    grid-auto-rows: 2in;
-    gap: 0;
-    padding: 0;
+    grid-template-columns: 76.2mm 76.2mm;
+    grid-auto-rows: 50.8mm;
+    column-gap: 20mm;
+    row-gap: 8mm;
+    padding: 25mm 22mm;
     margin: 0;
-    width: 6in;
+    box-sizing: border-box;
+    width: 215.9mm;
   }
   .print-label{
-    width: 3in;
-    height: 2in;
+    width: 76.2mm;
+    height: 50.8mm;
     box-sizing: border-box;
     padding: 2mm;
     font-family: Arial, sans-serif;
@@ -165,7 +167,6 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    position: relative;
   }
 
   .print-label-title {
