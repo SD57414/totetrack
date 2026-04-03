@@ -138,24 +138,24 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
 @media print{
   @page {
     size: letter portrait;
-    margin: 1in 0.85in;
+    margin: 0.85in 0.5in;
   }
   body { margin:0; padding:0; }
   body>*:not(#print-area){ display:none!important; }
   #print-area{
     display:grid!important;
-    grid-template-columns: 2in 2in;
-    grid-auto-rows: 3in;
-    gap: 0 0.8in;
+    grid-template-columns: 3in 3in;
+    grid-auto-rows: 2in;
+    gap: 0;
     padding: 0;
     margin: 0;
-    width: 4.8in;
+    width: 6in;
   }
   .print-label{
-    width: 2in;
-    height: 3in;
+    width: 3in;
+    height: 2in;
     box-sizing: border-box;
-    padding: 0;
+    padding: 2mm;
     font-family: Arial, sans-serif;
     overflow: hidden;
     border: 0.3mm dashed #bbb;
@@ -168,12 +168,8 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     position: relative;
   }
   .print-label-inner {
-    position: absolute;
-    top: 0; left: 0;
-    width: 3in;
-    height: 2in;
-    transform-origin: top left;
-    transform: rotate(90deg) translateY(-2in);
+    width: 100%;
+    height: 100%;
     padding: 2mm;
     display: flex;
     flex-direction: column;
@@ -218,8 +214,8 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     flex-shrink: 0;
   }
   .print-label-qr img {
-    width: 22mm;
-    height: 22mm;
+    width: 25mm;
+    height: 25mm;
     display: block;
   }
   .print-label-qr-id {
@@ -865,9 +861,11 @@ function printSingleLabel() {
 function buildPrintArea(arr, urls, includeItems = true) {
   document.getElementById('print-area').innerHTML = arr.map((t, i) => {
     const cat = t.category ? categories.find(c => c.name === t.category) : null;
-    const catText = cat ? ' • ' + t.category : '';
-    const locText = t.location ? ' • ' + t.location : '';
-    const meta = (catText + locText).replace(/^ • /, '') || '';
+    const catBadge = cat
+      ? '<span style="font-size:5.5pt;font-weight:bold;color:' + cat.color + ';background:' + cat.color + '22;border:0.2mm solid ' + cat.color + ';border-radius:1mm;padding:0.2mm 1.5mm;margin-right:1.5mm;">' + t.category + '</span>'
+      : '';
+    const locText = t.location ? '<span style="font-size:5.5pt;color:#2d6a4f;">' + t.location + '</span>' : '';
+    const meta = catBadge || locText ? catBadge + locText : '';
     // Show more items when no items section or when items shown vertically
     const maxItems = includeItems ? 8 : 0;
     const itemLines = t.items.slice(0, maxItems).map(item =>
@@ -877,18 +875,16 @@ function buildPrintArea(arr, urls, includeItems = true) {
       ? '<div style="color:#888;">+' + (t.items.length - maxItems) + ' more</div>' : '';
 
     return '<div class="print-label">' +
-      '<div class="print-label-inner">' +
-        '<div class="print-label-title">' + t.name + '</div>' +
-        (meta ? '<div class="print-label-meta">' + meta + '</div>' : '') +
-        '<div class="print-label-body">' +
-          '<div class="print-label-qr">' +
-            '<img src="' + urls[i] + '">' +
-            '<div class="print-label-qr-id">' + t.id + '</div>' +
-          '</div>' +
-          (includeItems && t.items.length > 0
-            ? '<div class="print-label-items">' + itemLines + moreItems + '</div>'
-            : '') +
+      '<div class="print-label-title">' + t.name + '</div>' +
+      (meta ? '<div class="print-label-meta" style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0.5mm;margin-bottom:1mm;">' + meta + '</div>' : '') +
+      '<div class="print-label-body">' +
+        '<div class="print-label-qr">' +
+          '<img src="' + urls[i] + '">' +
+          '<div class="print-label-qr-id">' + t.id + '</div>' +
         '</div>' +
+        (includeItems && t.items.length > 0
+          ? '<div class="print-label-items">' + itemLines + moreItems + '</div>'
+          : '') +
       '</div>' +
     '</div>';
   }).join('');
