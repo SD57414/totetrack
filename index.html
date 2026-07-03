@@ -155,8 +155,8 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     width: 3in;
     height: 2in;
     box-sizing: border-box;
-    padding: 3mm 2mm 2mm 2mm;
-    text-align: center;
+    padding: 3mm;
+    text-align: left;
     font-family: Arial, sans-serif;
     overflow: hidden;
     border: 0.3mm solid transparent;
@@ -164,8 +164,75 @@ header{background:var(--accent);color:#f5f0e8;padding:1rem 2rem;display:flex;ali
     page-break-inside: avoid;
     display: flex;
     flex-direction: column;
+  }
+  .print-label-title{
+    font-weight: 900;
+    font-size: 13pt;
+    text-transform: uppercase;
+    letter-spacing: 0.2mm;
+    line-height: 1.1;
+    word-break: break-word;
+    padding-bottom: 1mm;
+    border-bottom: 0.4mm solid #333;
+    margin-bottom: 1.2mm;
+  }
+  .print-label-meta{
+    display: flex;
     align-items: center;
-    justify-content: flex-start;
+    gap: 2mm;
+    margin-bottom: 1.5mm;
+    min-height: 4.5mm;
+  }
+  .print-label-cat{
+    font-size: 7pt;
+    font-weight: 700;
+    padding: 0.4mm 2mm;
+    border-radius: 8px;
+    border: 0.3mm solid;
+    white-space: nowrap;
+  }
+  .print-label-location{
+    font-size: 8pt;
+    font-weight: 600;
+    color: #222;
+  }
+  .print-label-body{
+    display: flex;
+    gap: 2.5mm;
+    flex: 1;
+    min-height: 0;
+  }
+  .print-label-qr{
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .print-label-qr img{
+    width: 20mm;
+    height: 20mm;
+    display: block;
+  }
+  .print-label-id{
+    font-family: monospace;
+    font-size: 7pt;
+    font-weight: bold;
+    color: #1a1a2e;
+    margin-top: 0.8mm;
+    letter-spacing: 0.3mm;
+  }
+  .print-label-items{
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .print-label-items div{
+    font-size: 7.5pt;
+    padding: 0.6mm 0;
+    border-bottom: 0.2mm solid #ddd;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 #print-area{display:none;}
@@ -786,18 +853,22 @@ function printSingleLabel() {
 function buildPrintArea(arr, urls, includeItems = true) {
   document.getElementById('print-area').innerHTML = arr.map((t, i) => {
     const cat = t.category ? categories.find(c => c.name === t.category) : null;
-    const catLine = cat
-      ? '<div style="font-size:6pt;font-weight:bold;color:' + cat.color + ';margin-bottom:1mm;padding:0.5mm 2mm;background:' + cat.color + '18;border-radius:2px;display:inline-block;">&#x1F3F7; ' + t.category + '</div>'
+    const catPill = cat
+      ? '<div class="print-label-cat" style="border-color:' + cat.color + ';color:' + cat.color + ';">' + t.category + '</div>'
       : '';
-    const location = t.location ? '<div style="font-size:6pt;color:#2d6a4f;margin-bottom:1mm;">' + t.location + '</div>' : '';
-    const itemLines = t.items.slice(0, 6).map(item => '<div style="font-size:5.5pt;padding:0.3mm 0;text-align:left;">&#x203A; ' + item + '</div>').join('');
-    const moreItems = t.items.length > 6 ? '<div style="font-size:5.5pt;color:#888;text-align:left;">+ ' + (t.items.length-6) + ' more</div>' : '';
+    const location = t.location ? '<div class="print-label-location">' + t.location + '</div>' : '';
+    const itemLines = t.items.slice(0, 8).map(item => '<div>&#x203A; ' + item + '</div>').join('');
+    const moreItems = t.items.length > 8 ? '<div style="color:#888;">+ ' + (t.items.length-8) + ' more</div>' : '';
     return '<div class="print-label">' +
-      '<div style="font-family:Arial,sans-serif;font-weight:900;font-size:10pt;text-transform:uppercase;letter-spacing:0.3mm;margin-bottom:1mm;line-height:1.1;word-break:break-word;">' + t.name + '</div>' +
-      catLine + location +
-      '<img src="' + urls[i] + '" style="width:28mm;height:28mm;display:block;">' +
-      '<div style="font-family:monospace;font-size:8pt;font-weight:bold;color:#1a1a2e;margin:1mm 0;letter-spacing:0.5mm;">' + t.id + '</div>' +
-      (includeItems && t.items.length > 0 ? '<div style="border-top:0.3mm solid #ccc;padding-top:1mm;width:100%;">' + itemLines + moreItems + '</div>' : '') +
+      '<div class="print-label-title">' + t.name + '</div>' +
+      '<div class="print-label-meta">' + catPill + location + '</div>' +
+      '<div class="print-label-body">' +
+        '<div class="print-label-qr">' +
+          '<img src="' + urls[i] + '">' +
+          '<div class="print-label-id">' + t.id + '</div>' +
+        '</div>' +
+        (includeItems && t.items.length > 0 ? '<div class="print-label-items">' + itemLines + moreItems + '</div>' : '') +
+      '</div>' +
       '</div>';
   }).join('');
 }
